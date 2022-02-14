@@ -14,8 +14,8 @@ Commands such as load, and delete, have additional ".other" permissions. These c
 | /palette list| list personal palettes | palette.list |
 | /palette list public | list all public palettes | palette.list.public |
 | /palette list player \<playerName> | list all palettes belonging to player | palette.list.player |
-| /palette edit \<paletteName> <name\|rename> <newName> | edit a specific palette's name | palette.edit.name, palette.edit.other |
-| /palette edit \<paletteName> privacy <privacySetting> | edit a specific palette's privacy | palette.edit.privacy, palette.edit.other |
+| /palette edit \<paletteName> \<name\|rename> \<newName> | edit a specific palette's name | palette.edit.name, palette.edit.other |
+| /palette edit \<paletteName> privacy \<public\|private> | edit a specific palette's privacy | palette.edit.privacy, palette.edit.other |
 
 ## Config
 ```YAML
