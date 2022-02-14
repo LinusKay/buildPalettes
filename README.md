@@ -11,14 +11,14 @@ A Minecraft Spigot plugin that allows players to manage/share custom block palet
 | /palette help | view plugin commands & info | palette.help |
 | /palette reload | reload plugin config | palette.reload |
 
-# Config
+## Config
 ``` YAML
 # blacklist particular blocks - MUST BE CAPITALISED, VALID BLOCK NAMES
 blacklist:
 - BARRIER
 ```
 
-# Palette Config
+## Palette Config
 ```YAML
 # in the event that palettes need to be edited directly, the format is as follows
 # text in <angled brackets> refers to a variable
