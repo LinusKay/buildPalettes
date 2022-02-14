@@ -8,7 +8,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +33,8 @@ public class paletteCommands implements CommandExecutor {
             //region SAVE PALETTE
             //save inventory
             if (args[0].equalsIgnoreCase("save")) {
+                if (!(checkPermission(player, "palettes.save"))) { return true; }
+
                 //require palette name
                 if (args.length == 1){
                     player.sendMessage("Please provide a name for your palette");
@@ -47,6 +48,10 @@ public class paletteCommands implements CommandExecutor {
                         String itemName = player.getInventory().getItem(i).getType().name();
                         player.sendMessage(itemName);
                         paletteItems.add(itemName);
+                        if (plugin.getPluginConfig().getStringList("blacklist").contains(itemName)){
+                            player.sendMessage("Palette cannot contain blacklisted item " + itemName);
+                            return true;
+                        }
                     }
                 }
                 plugin.getPaletteConfig().set(paletteName + ".owner", playerUUID);
@@ -57,6 +62,8 @@ public class paletteCommands implements CommandExecutor {
 
             //region LOAD PALETTE
             else if (args[0].equalsIgnoreCase("load")) {
+                if (!(checkPermission(player, "palettes.load"))) { return true; }
+
                 //require palette name
                 if (args.length == 1){
                     player.sendMessage("Please provide a palette name to load");
@@ -82,6 +89,8 @@ public class paletteCommands implements CommandExecutor {
 
             //region DELETE PALETTE
             else if (args[0].equalsIgnoreCase("delete")) {
+                if (!(checkPermission(player, "palettes.delete"))) { return true; }
+
                 if (args.length == 1){
                     player.sendMessage("Please provide a palette name to delete");
                     return true;
@@ -103,8 +112,30 @@ public class paletteCommands implements CommandExecutor {
                 plugin.savePaletteConfig();
             }
             //endregion
+
+            //region RELOAD/HELP
+            else if (args[0].equalsIgnoreCase("reload")) {
+                if (!(checkPermission(player, "palettes.reload"))) { return true; }
+                plugin.reloadPluginConfig();
+            }
+
+            else if (args[0].equalsIgnoreCase("help")) {
+                if (!(checkPermission(player, "palettes.help"))) { return true; }
+                player.sendMessage("/palette <save|load|delete> <paletteName> - save/load/delete palette\n/palette reload - reload plugin config");
+            }
+            //endregion
         }
 
         return true;
     }
+
+    public boolean checkPermission(Player p, String perm) {
+        if(p.hasPermission(perm)) { return true; }
+        else {
+            p.sendMessage("You lack permission \"" + perm + "\"");
+            return false;
+        }
+    }
 }
+
+

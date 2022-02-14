@@ -13,11 +13,14 @@ public class Main extends JavaPlugin {
 
     private File PaletteFile;
     private FileConfiguration paletteConfig;
-    private FileConfiguration config;
+
+    private File ConfigFile;
+    private FileConfiguration pluginConfig;
 
     @Override
     public void onEnable()
     {
+        createPluginConfig();
         createPaletteConfig();
         getServer().getConsoleSender().sendMessage("buildPalettes enabled");
         getCommand("palette").setExecutor(new paletteCommands(this));
@@ -57,5 +60,40 @@ public class Main extends JavaPlugin {
         // reassign variables
         PaletteFile = new File(getDataFolder(), "palettes.yml");
         paletteConfig = YamlConfiguration.loadConfiguration(PaletteFile);
+    }
+
+    public FileConfiguration getPluginConfig() {
+        return this.pluginConfig;
+    }
+
+    public void createPluginConfig() {
+        ConfigFile = new File(getDataFolder(), "config.yml");
+        if (!ConfigFile.exists()){
+            ConfigFile.getParentFile().mkdirs();
+            saveResource("config.yml", false);
+        }
+
+        pluginConfig = new YamlConfiguration();
+        try {
+            pluginConfig.load(ConfigFile);
+        }
+        catch (IOException | InvalidConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void savePluginConfig() {
+        try {
+            getPluginConfig().save(ConfigFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ConfigFile = new File(getDataFolder(), "config.yml");
+        pluginConfig = YamlConfiguration.loadConfiguration(ConfigFile);
+    }
+
+    public void reloadPluginConfig() {
+        ConfigFile = new File(getDataFolder(), "config.yml");
+        pluginConfig = YamlConfiguration.loadConfiguration(ConfigFile);
     }
 }
