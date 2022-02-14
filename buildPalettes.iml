@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="jdk" jdkName="azul-17" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library" exported="">
+    <orderEntry type="module-library">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../dependencies/spigot-api-1.18.1.jar!/" />

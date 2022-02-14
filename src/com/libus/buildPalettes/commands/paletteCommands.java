@@ -7,6 +7,7 @@
 package com.libus.buildPalettes.commands;
 
 import com.libus.buildPalettes.Main;
+import com.libus.buildPalettes.Palette;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -71,7 +72,7 @@ public class paletteCommands implements CommandExecutor {
                 plugin.getPaletteConfig().set(paletteName + ".privacy", "private");
                 plugin.getPaletteConfig().set(paletteName + ".items", paletteItems);
                 plugin.savePaletteConfig();
-                player.sendMessage("Palette \"" + paletteName + "\"");
+                player.sendMessage("Palette \"" + paletteName + "\" saved");
             }
             //endregion
 
@@ -159,12 +160,18 @@ public class paletteCommands implements CommandExecutor {
             //region LIST PALETTES
             else if (args[0].equalsIgnoreCase("list")) {
                 if (!(checkPermission(player, "palettes.list"))) { return true; }
-                List<String> palettes = new ArrayList<>();
+                List<Palette> palettes = new ArrayList<>();
+
+                int page = 0;
+
                 // get all personal palettes
                 // /palette list
-                if (args.length == 1) {
+                if (args.length == 1 || isNumeric(args[1])) {
                     palettes = getPalettesByPlayer(playerUUID);
                     player.sendMessage("List palettes (" + player.getName() + "):");
+                    if (args.length > 1) {
+                        page = Integer.parseInt(args[1]);
+                    }
                 }
                 else {
                     // get all public palettes
@@ -173,6 +180,9 @@ public class paletteCommands implements CommandExecutor {
                         if (!(checkPermission(player, "palettes.list.public"))) { return true; }
                         palettes = getPalettesByPrivacy("public");
                         player.sendMessage("List palettes (Public):");
+                        if (args.length > 2) {
+                            page = Integer.parseInt(args[2]);
+                        }
                     }
                     // get all palettes belonging to player
                     // /palette list player <playerName>
@@ -183,12 +193,23 @@ public class paletteCommands implements CommandExecutor {
                         palettes = getPalettesByPlayer(targetUUID);
 
                         player.sendMessage("List palettes (" + args[2] + "):");
+                        if (args.length > 3) {
+                            page = Integer.parseInt(args[3]);
+                        }
                     }
                 }
                 if(palettes.size() == 0) { player.sendMessage("No palettes found!"); return true; }
-                for(String palette : palettes) {
-                    player.sendMessage("- " + palette);
+
+                int maxDisplay = 6;
+                if (page > 0) page--;
+                for(int i = page * maxDisplay; i < page * maxDisplay + maxDisplay; i++) {
+                    String name = palettes.get(i).getName();
+                    String privacy = palettes.get(i).getPrivacy();
+                    List<String> blocks = palettes.get(i).getBlocks();
+                    player.sendMessage("- " + name);
+                    if(i + 1 >= palettes.size()) break;
                 }
+                player.sendMessage("page " + (page+1));
             }
             //endregion
 
@@ -270,25 +291,37 @@ public class paletteCommands implements CommandExecutor {
         }
     }
 
-    public List<String> getPalettesByPlayer(String playerUUID) {
-        List<String> palettes = new ArrayList<>();
+    public List<Palette> getPalettesByPlayer(String playerUUID) {
+        List<Palette> palettes = new ArrayList<>();
         for(String key : plugin.getPaletteConfig().getKeys(false)) {
             if(playerUUID.equalsIgnoreCase(plugin.getPaletteConfig().get(key + ".owner").toString())) {
-                palettes.add(key);
+                Palette pal = new Palette(key, plugin.getPaletteConfig().get(key + ".privacy").toString(), plugin.getPaletteConfig().getStringList(key + ".items"));
+                palettes.add(pal);
             }
         }
         return palettes;
     }
 
-    public List<String> getPalettesByPrivacy(String privacyLevel) {
-        List<String> palettes = new ArrayList<>();
+    public List<Palette> getPalettesByPrivacy(String privacyLevel) {
+        List<Palette> palettes = new ArrayList<>();
         for(String key : plugin.getPaletteConfig().getKeys(false)) {
             if(plugin.getPaletteConfig().get(key + ".privacy").toString().equalsIgnoreCase(privacyLevel)) {
-                palettes.add(key);
+                Palette pal = new Palette(key, privacyLevel, plugin.getPaletteConfig().getStringList(key + ".items"));
+                palettes.add(pal);
             }
         }
         return palettes;
     }
+
+    public static boolean isNumeric(String str) {
+        try {
+            Double.parseDouble(str);
+            return true;
+        } catch(NumberFormatException e){
+            return false;
+        }
+    }
+
 
 }
 
