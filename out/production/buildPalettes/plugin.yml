@@ -1,0 +1,10 @@
+  name: buildPalettes
+  main: com.libus.buildPalettes.Main
+  version: 1.0
+  author: libus
+  api-version: 1.18
+  commands:
+    palette:
+      description: run palette commands
+      usage: /palette
+      aliases: [p, pa]
