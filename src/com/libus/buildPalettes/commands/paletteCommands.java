@@ -164,25 +164,25 @@ public class paletteCommands implements CommandExecutor {
                 // /palette list
                 if (args.length == 1) {
                     palettes = getPalettesByPlayer(playerUUID);
-                    player.sendMessage("Palettes (" + player.getName() + "):");
+                    player.sendMessage("List palettes (" + player.getName() + "):");
                 }
-                else if (args.length > 1) {
+                else {
                     // get all public palettes
                     // /palette list public
                     if (args[1].equalsIgnoreCase("public")) {
                         if (!(checkPermission(player, "palettes.list.public"))) { return true; }
                         palettes = getPalettesByPrivacy("public");
-                        player.sendMessage("Palettes (Public):");
+                        player.sendMessage("List palettes (Public):");
                     }
                     // get all palettes belonging to player
                     // /palette list player <playerName>
                     else if (args[1].equalsIgnoreCase("player")) {
                         if (!(checkPermission(player, "palettes.list.player"))) { return true; }
-                        if (args.length < 2) { player.sendMessage("Please specify player name"); return true; }
+                        if (args.length < 3) { player.sendMessage("Please specify player name"); return true; }
                         String targetUUID = Bukkit.getOfflinePlayer(args[2]).getUniqueId().toString();
                         palettes = getPalettesByPlayer(targetUUID);
 
-                        player.sendMessage("Palettes (" + args[2] + "):");
+                        player.sendMessage("List palettes (" + args[2] + "):");
                     }
                 }
                 if(palettes.size() == 0) { player.sendMessage("No palettes found!"); return true; }
@@ -192,6 +192,7 @@ public class paletteCommands implements CommandExecutor {
             }
             //endregion
 
+            //region EDIT PALETTE
             else if(args[0].equalsIgnoreCase("edit")) {
                 if (!(checkPermission(player, "palettes.edit"))) { return true; }
                 //require palette name
@@ -241,11 +242,12 @@ public class paletteCommands implements CommandExecutor {
                         return true;
                     }
                     plugin.getPaletteConfig().set(paletteName + ".privacy", newPrivacy);
-                    plugin.savePaletteConfig();;
+                    plugin.savePaletteConfig();
                     player.sendMessage("Palette \"" + paletteName + "\" privacy set to " + newPrivacy);
                 }
 
             }
+            //endregion
 
             else { player.sendMessage("Command not recognised");}
         }

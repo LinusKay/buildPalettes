@@ -31,6 +31,7 @@ blacklist:
 
 # <paletteName>:
 #  owner: <UUID of player>
+#  privacy: private
 #  items:
 #  - <block>
 #  - <block>
@@ -44,6 +45,7 @@ blacklist:
 
 coolPalette:
   owner: 2645e025-e900-441b-8d02-074a36680777
+  privacy: private
   items:
   - STONE
   - OAK_PLANKS
