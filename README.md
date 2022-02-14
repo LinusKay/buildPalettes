@@ -2,18 +2,24 @@
 A Minecraft Spigot plugin that allows players to manage/share custom block palettes.
 
 ## Commands
+Commands such as load, and delete, have additional ".other" permissions. These control whether a player can load palettes belonging to other players or not.
 
 | Command | description | permission |
 |-------- | ----------- | ---------- |
 | /palette save \<paletteName> | save a palette with the given name | palette.save |
-| /palette load \<paletteName> | load a palette with the given name | palette.load |
-| /palette delete \<paletteName> | delete a palette with the given name | palette.delete|
+| /palette load \<paletteName> | load a palette with the given name | palette.load, palettes.load.other |
+| /palette delete \<paletteName> | delete a palette with the given name | palette.delete, palettes.delete.other|
 | /palette help | view plugin commands & info | palette.help |
 | /palette reload | reload plugin config | palette.reload |
+| /palette list| list personal palettes | palette.list |
+| /palette list public | list all public palettes | palette.list.public |
+| /palette list player \<playerName> | list all palettes belonging to player | palette.list.player |
+| /palette edit \<paletteName> <name\|rename> <newName> | edit a specific palette's name | palette.edit.name, palette.edit.other |
+| /palette edit \<paletteName> privacy <privacySetting> | edit a specific palette's privacy | palette.edit.privacy, palette.edit.other |
 
 ## Config
-``` YAML
-# blacklist particular blocks - MUST BE CAPITALISED, VALID BLOCK NAMES
+```YAML
+palette_limit: 3
 blacklist:
 - BARRIER
 ```

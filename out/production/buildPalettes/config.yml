@@ -1,3 +1,4 @@
 # blacklist particular blocks - MUST BE CAPITALISED, VALID BLOCK NAMES
+palette_limit: 3
 blacklist:
  - BARRIER

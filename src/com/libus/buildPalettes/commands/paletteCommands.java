@@ -1,6 +1,13 @@
+// instead of just pulling strings, create a Palette object type
+// this allows not just the name, but the palette contents to be grabbed
+// allowing functions such as showing the palette blocks upon hover
+
+//method of pulling UUID of offline players queries the API online, which can be slow
+
 package com.libus.buildPalettes.commands;
 
 import com.libus.buildPalettes.Main;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -35,9 +42,16 @@ public class paletteCommands implements CommandExecutor {
             if (args[0].equalsIgnoreCase("save")) {
                 if (!(checkPermission(player, "palettes.save"))) { return true; }
 
+                //check how many palettes user already has
+                int paletteLimit = plugin.getPluginConfig().getInt("palette_limit");
+                if(getPalettesByPlayer(playerUUID).size() >= paletteLimit) {
+                    player.sendMessage("Palette limit reached! (" + paletteLimit + ")");
+                    return true;
+                }
+
                 //require palette name
                 if (args.length == 1){
-                    player.sendMessage("Please provide a name for your palette");
+                    player.sendMessage("Please provide a name for your new palette.");
                     return true;
                 }
                 //loop through inventory and grab non-air items
@@ -46,7 +60,6 @@ public class paletteCommands implements CommandExecutor {
                 for (int i = 0; i < 9; i++) {
                     if (player.getInventory().getItem(i) != null) {
                         String itemName = player.getInventory().getItem(i).getType().name();
-                        player.sendMessage(itemName);
                         paletteItems.add(itemName);
                         if (plugin.getPluginConfig().getStringList("blacklist").contains(itemName)){
                             player.sendMessage("Palette cannot contain blacklisted item " + itemName);
@@ -55,8 +68,10 @@ public class paletteCommands implements CommandExecutor {
                     }
                 }
                 plugin.getPaletteConfig().set(paletteName + ".owner", playerUUID);
+                plugin.getPaletteConfig().set(paletteName + ".privacy", "private");
                 plugin.getPaletteConfig().set(paletteName + ".items", paletteItems);
                 plugin.savePaletteConfig();
+                player.sendMessage("Palette \"" + paletteName + "\"");
             }
             //endregion
 
@@ -77,10 +92,25 @@ public class paletteCommands implements CommandExecutor {
                     return true;
                 }
 
-                List<String> paletteItems = plugin.getPaletteConfig().getStringList(paletteName + ".items");
-                for(int i = 0; i < paletteItems.size(); i++)
+                //check if palette belongs to player
+                //if does not belong, check if private/public
+                //if private, cancel
+                //if public, check if player has perm to load other players' palettes
+                if(!(playerUUID.equalsIgnoreCase(plugin.getPaletteConfig().get(paletteName + ".owner").toString())))
                 {
-                    ItemStack paletteItem = new ItemStack(Material.getMaterial(paletteItems.get(i)));
+                    String privacy = plugin.getPaletteConfig().getString(paletteName + ".privacy");
+                    if (privacy.equalsIgnoreCase("private")) {
+                        player.sendMessage("This palette is private");
+                        return true;
+                    }
+                    if (privacy.equalsIgnoreCase("public")) {
+                        if (!(checkPermission(player, "palettes.load.other"))) { return true; }
+                    }
+                }
+
+                List<String> paletteItems = plugin.getPaletteConfig().getStringList(paletteName + ".items");
+                for (String item : paletteItems) {
+                    ItemStack paletteItem = new ItemStack(Material.getMaterial(item));
                     player.getInventory().addItem(paletteItem);
                 }
                 player.sendMessage("Palette \"" + paletteName + "\" loaded");
@@ -103,13 +133,14 @@ public class paletteCommands implements CommandExecutor {
                     return true;
                 }
 
-                if(!(playerUUID == plugin.getPaletteConfig().get(paletteName + ".owner")))
+                if(!(playerUUID.equalsIgnoreCase(plugin.getPaletteConfig().get(paletteName + ".owner").toString()) && checkPermission(player, "palettes.delete.other")))
                 {
                     player.sendMessage("You do not have permission to delete \"" + paletteName + "\"");
                     return true;
                 }
                 plugin.getPaletteConfig().set(paletteName, null);
                 plugin.savePaletteConfig();
+                player.sendMessage("Palette \"" + paletteName + "\" deleted");
             }
             //endregion
 
@@ -124,10 +155,110 @@ public class paletteCommands implements CommandExecutor {
                 player.sendMessage("/palette <save|load|delete> <paletteName> - save/load/delete palette\n/palette reload - reload plugin config");
             }
             //endregion
+
+            //region LIST PALETTES
+            else if (args[0].equalsIgnoreCase("list")) {
+                if (!(checkPermission(player, "palettes.list"))) { return true; }
+                List<String> palettes = new ArrayList<>();
+                // get all personal palettes
+                // /palette list
+                if (args.length == 1) {
+                    palettes = getPalettesByPlayer(playerUUID);
+                    player.sendMessage("Palettes (" + player.getName() + "):");
+                }
+                else if (args.length > 1) {
+                    // get all public palettes
+                    // /palette list public
+                    if (args[1].equalsIgnoreCase("public")) {
+                        if (!(checkPermission(player, "palettes.list.public"))) { return true; }
+                        palettes = getPalettesByPrivacy("public");
+                        player.sendMessage("Palettes (Public):");
+                    }
+                    // get all palettes belonging to player
+                    // /palette list player <playerName>
+                    else if (args[1].equalsIgnoreCase("player")) {
+                        if (!(checkPermission(player, "palettes.list.player"))) { return true; }
+                        if (args.length < 2) { player.sendMessage("Please specify player name"); return true; }
+                        String targetUUID = Bukkit.getOfflinePlayer(args[2]).getUniqueId().toString();
+                        palettes = getPalettesByPlayer(targetUUID);
+
+                        player.sendMessage("Palettes (" + args[2] + "):");
+                    }
+                }
+                if(palettes.size() == 0) { player.sendMessage("No palettes found!"); return true; }
+                for(String palette : palettes) {
+                    player.sendMessage("- " + palette);
+                }
+            }
+            //endregion
+
+            else if(args[0].equalsIgnoreCase("edit")) {
+                if (!(checkPermission(player, "palettes.edit"))) { return true; }
+                //require palette name
+                if (args.length == 1){
+                    player.sendMessage("Please provide a palette name to edit");
+                    return true;
+                }
+                String paletteName = args[1];
+
+                if(!(playerUUID.equalsIgnoreCase(plugin.getPaletteConfig().get(paletteName + ".owner").toString())))
+                {
+                    if (!(checkPermission(player, "palettes.edit.other"))) { return true; }
+                }
+
+
+                if (args.length < 3) {
+                    player.sendMessage("Please provide a parameter to edit");
+                    return true;
+                }
+                // edit name
+                // /palette edit <paletteName> name <newPaletteName>
+                if (args[2].equalsIgnoreCase("name") || args[2].equalsIgnoreCase("rename")) {
+                    if (args.length < 4) {
+                        player.sendMessage("Please enter a new name");
+                        return true;
+                    }
+                    String newPaletteName = args[3];
+                    for (String s : plugin.getPaletteConfig().getConfigurationSection(paletteName).getKeys(false)) {
+                        plugin.getPaletteConfig().set(newPaletteName + "." + s, plugin.getPaletteConfig().get(paletteName + "." + s));
+                    }
+                    plugin.savePaletteConfig();
+                    plugin.getPaletteConfig().set(paletteName, null);
+                    plugin.savePaletteConfig();
+
+                    player.sendMessage("Renamed palette \"" + paletteName + "\" to \"" + newPaletteName + "\"");
+                }
+                // edit privacy
+                // /palette edit <paletteName> privacy <newPrivacy>
+                else if(args[2].equalsIgnoreCase("privacy")) {
+                    if (args.length < 4) {
+                        player.sendMessage("Please enter a privacy setting");
+                        return true;
+                    }
+                    String newPrivacy = args[3];
+                    if (!(newPrivacy.equalsIgnoreCase("public") || newPrivacy.equalsIgnoreCase("private"))) {
+                        player.sendMessage("Please enter a valid privacy setting (public/private)");
+                        return true;
+                    }
+                    plugin.getPaletteConfig().set(paletteName + ".privacy", newPrivacy);
+                    plugin.savePaletteConfig();;
+                    player.sendMessage("Palette \"" + paletteName + "\" privacy set to " + newPrivacy);
+                }
+
+            }
+
+            else { player.sendMessage("Command not recognised");}
         }
 
         return true;
     }
+
+
+
+
+
+
+
 
     public boolean checkPermission(Player p, String perm) {
         if(p.hasPermission(perm)) { return true; }
@@ -136,6 +267,27 @@ public class paletteCommands implements CommandExecutor {
             return false;
         }
     }
+
+    public List<String> getPalettesByPlayer(String playerUUID) {
+        List<String> palettes = new ArrayList<>();
+        for(String key : plugin.getPaletteConfig().getKeys(false)) {
+            if(playerUUID.equalsIgnoreCase(plugin.getPaletteConfig().get(key + ".owner").toString())) {
+                palettes.add(key);
+            }
+        }
+        return palettes;
+    }
+
+    public List<String> getPalettesByPrivacy(String privacyLevel) {
+        List<String> palettes = new ArrayList<>();
+        for(String key : plugin.getPaletteConfig().getKeys(false)) {
+            if(plugin.getPaletteConfig().get(key + ".privacy").toString().equalsIgnoreCase(privacyLevel)) {
+                palettes.add(key);
+            }
+        }
+        return palettes;
+    }
+
 }
 
 

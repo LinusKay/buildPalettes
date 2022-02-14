@@ -17,6 +17,9 @@ public class Main extends JavaPlugin {
     private File ConfigFile;
     private FileConfiguration pluginConfig;
 
+    private File LangFile;
+    private FileConfiguration langConfig;
+
     @Override
     public void onEnable()
     {
@@ -32,6 +35,7 @@ public class Main extends JavaPlugin {
 
     }
 
+    // Palette storage config setup
     public FileConfiguration getPaletteConfig() {
         return this.paletteConfig;
     }
@@ -62,11 +66,12 @@ public class Main extends JavaPlugin {
         paletteConfig = YamlConfiguration.loadConfiguration(PaletteFile);
     }
 
+    // Plugin config setup
     public FileConfiguration getPluginConfig() {
         return this.pluginConfig;
     }
 
-    public void createPluginConfig() {
+    private void createPluginConfig() {
         ConfigFile = new File(getDataFolder(), "config.yml");
         if (!ConfigFile.exists()){
             ConfigFile.getParentFile().mkdirs();
@@ -95,5 +100,41 @@ public class Main extends JavaPlugin {
     public void reloadPluginConfig() {
         ConfigFile = new File(getDataFolder(), "config.yml");
         pluginConfig = YamlConfiguration.loadConfiguration(ConfigFile);
+    }
+
+    // Lang config setup
+    public FileConfiguration getLangConfig() {
+        return this.langConfig;
+    }
+
+    private void createLangConfig() {
+        LangFile = new File(getDataFolder(), "lang.yml");
+        if (!LangFile.exists()){
+            LangFile.getParentFile().mkdirs();
+            saveResource("lang.yml", false);
+        }
+
+        langConfig = new YamlConfiguration();
+        try {
+            langConfig.load(LangFile);
+        }
+        catch (IOException | InvalidConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveLangConfig() {
+        try {
+            getPluginConfig().save(LangFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        LangFile = new File(getDataFolder(), "lang.yml");
+        langConfig = YamlConfiguration.loadConfiguration(LangFile);
+    }
+
+    public void reloadLangConfig() {
+        LangFile = new File(getDataFolder(), "lang.yml");
+        langConfig = YamlConfiguration.loadConfiguration(LangFile);
     }
 }
